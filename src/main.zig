@@ -21,16 +21,26 @@ pub fn main() void {
 
     rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
+    var tilemap: [16][16]tileinfo.Tile(f32) = undefined;
+    for (&tilemap) |*row| {
+        for (row) |*tile| {
+            tile.* = tiles[0];
+        }
+    }
+
     var gesture: rl.Gesture = undefined;
     var touch_position: rl.Vector2 = undefined;
 
     const textures: rl.Texture2D = rl.loadTexture("./resources/spacewarp_assets.png");
     defer textures.unload();
 
-    const pos = rect.init(0, 0, 48, 48);
-    const frame = rect.init(8, 0, 8, 8);
-
     var selection: u32 = 0;
+    var selected_tile: tileinfo.Tile(f32) = tileinfo.void_tile;
+
+    const transparent = rl.Color.init(255, 255, 255, 127);
+    var highlight = rl.Rectangle.init(0, 0, 48, 48);
+    var show_highlight: bool = false;
+
     // Main game loop
     while (!rl.windowShouldClose()) { // Detect window close button or ESC key
         // Update
@@ -43,7 +53,69 @@ pub fn main() void {
             const x = @divFloor(touch_position.x - 772, 63);
             const y = @divFloor(touch_position.y, 63);
 
-            if (gesture == rl.Gesture.gesture_tap) selection = @intFromFloat(4 * y + x);
+            if (gesture == rl.Gesture.gesture_tap) {
+                selection = @intFromFloat(4 * y + x);
+                selected_tile = if (selection < tiles.len) tiles[selection] else tiles[0];
+
+                highlight.width = switch (selected_tile.tile_type) {
+                    .end => 2 * 48,
+                    else => 48,
+                };
+                highlight.height = switch (selected_tile.tile_type) {
+                    .door => 2 * 48,
+                    .end => 2 * 48,
+                    else => 48,
+                };
+            }
+            show_highlight = false;
+        }
+
+        if (touch_position.x < 768) {
+            show_highlight = true;
+
+            const x: usize = @intFromFloat(@divFloor(touch_position.x, 48));
+            const y: usize = @intFromFloat(@divFloor(touch_position.y, 48));
+
+            highlight.x = @floatFromInt(x * 48);
+            highlight.y = @floatFromInt(y * 48);
+
+            if (gesture == rl.Gesture.gesture_tap) {
+                const tile = &tilemap[y][x];
+                switch (tile.tile_type) {
+                    .door => tilemap[y + 1][x] = tileinfo.void_tile,
+                    .end => {
+                        tilemap[y + 1][x] = tileinfo.void_tile;
+                        tilemap[y][x + 1] = tileinfo.void_tile;
+                        tilemap[y + 1][x + 1] = tileinfo.void_tile;
+                    },
+                    .right => {
+                        tilemap[y + 1][x] = tileinfo.void_tile;
+                        tilemap[y][x - 1] = tileinfo.void_tile;
+                        tilemap[y + 1][x - 1] = tileinfo.void_tile;
+                    },
+                    .bottom => {
+                        tilemap[y - 1][x] = tileinfo.void_tile;
+                        if (x < 15 and tilemap[y][x + 1].tile_type == tileinfo.TileType.corner) {
+                            tilemap[y][x + 1] = tileinfo.void_tile;
+                            tilemap[y - 1][x + 1] = tileinfo.void_tile;
+                        }
+                    },
+                    else => {},
+                }
+                switch (selected_tile.tile_type) {
+                    .door => if (y + 1 < tilemap.len) {
+                        tile.* = selected_tile;
+                        tilemap[y + 1][x] = tileinfo.bottom_tile;
+                    },
+                    .end => if (y + 1 < tilemap.len and x + 1 < tilemap[y].len) {
+                        tile.* = selected_tile;
+                        tilemap[y + 1][x] = tileinfo.bottom_tile;
+                        tilemap[y][x + 1] = tileinfo.right_tile;
+                        tilemap[y + 1][x + 1] = tileinfo.corner_tile;
+                    },
+                    else => tile.* = selected_tile,
+                }
+            }
         }
         // Draw
         //----------------------------------------------------------------------------------
@@ -53,7 +125,6 @@ pub fn main() void {
         rl.clearBackground(rl.Color.black);
 
         rl.drawRectangle(768, 0, 4, 768, rl.Color.dark_gray);
-        rl.drawText("Congrats! You created your first window!", 190, 200, 20, rl.Color.light_gray);
 
         for (tiles, 0..) |tile, i| {
             const x: LargerInt(isize) = 780 + 63 * @mod(i, 4);
@@ -64,7 +135,22 @@ pub fn main() void {
             tile.draw(textures, position);
         }
 
-        rl.drawTexturePro(textures, frame, pos, orig, 0, rl.Color.white);
+        for (tilemap, 0..) |row, y| {
+            for (row, 0..) |tile, x| {
+                const width: f32 = switch (tile.tile_type) {
+                    .end => 48 * 2,
+                    else => 48,
+                };
+                const height: f32 = switch (tile.tile_type) {
+                    .door => 48 * 2,
+                    .end => 48 * 2,
+                    else => 48,
+                };
+                tile.draw(textures, rect.init(@floatFromInt(x * 48), @floatFromInt(y * 48), width, height));
+            }
+        }
+
+        if (show_highlight) rl.drawRectangleRec(highlight, transparent);
         //----------------------------------------------------------------------------------
     }
 }

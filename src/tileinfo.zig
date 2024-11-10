@@ -9,6 +9,9 @@ pub const TileType = union(enum) {
     button: Color,
     key: Color,
     end,
+    bottom,
+    right,
+    corner,
     none,
 };
 
@@ -28,11 +31,15 @@ pub fn Tile(comptime T: type) type {
                 .end => rl.Rectangle.init(self.x, self.y, 16, 16),
                 else => rl.Rectangle.init(self.x, self.y, 8, 8),
             };
-            // const position = rl.Rectangle.init(pos.x, pos.y, source.width, source.height);
             rl.drawTexturePro(texture, source, pos, rl.Vector2.init(0, 0), 0, rl.Color.white);
         }
     };
 }
+
+pub const void_tile = Tile(f32).init(0, 0, TileType.none);
+pub const bottom_tile = Tile(f32).init(0, 0, TileType.bottom);
+pub const right_tile = Tile(f32).init(0, 0, TileType.right);
+pub const corner_tile = Tile(f32).init(0, 0, TileType.corner);
 
 // yeah this is probably gonna change in the future but i don't feel like reorganizing the png file
 pub const tiles = [_]Tile(f32){
