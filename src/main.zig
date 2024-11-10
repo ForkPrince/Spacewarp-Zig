@@ -2,43 +2,13 @@
 
 const std = @import("std");
 const rl = @import("raylib");
+const tileinfo = @import("./tileinfo.zig");
+
 const rect = rl.Rectangle;
 
 const orig = rl.Vector2.init(0, 0);
 
-const tiles = [_]Tile{
-    Tile.init(0, 0), // Empty
-    Tile.init(4, 0), // Wall
-    Tile.init(5, 0), // Wall
-    Tile.init(6, 0), // Wall
-    Tile.init(7, 0), // Wall
-    Tile.init(4, 1), // Wall
-    Tile.init(5, 1), // Wall
-    Tile.init(6, 1), // Wall
-    Tile.init(7, 1), // Wall
-    Tile.init(2, 2), // Wall
-    Tile.init(3, 2), // Wall
-    Tile.init(4, 2), // Wall
-    Tile.init(5, 2), // Wall
-    Tile.init(2, 3), // Wall
-    Tile.init(3, 3), // Wall
-    Tile.init(4, 3), // Wall
-    Tile.init(5, 3), // Wall
-    Tile.init(0, 2), // Fire
-    Tile.init(1, 2), // Fire
-    Tile.init(0, 3), // Fire
-    Tile.init(1, 3), // Fire
-    Tile.initBig(0, 4, 2, 2), // Ship
-    Tile.initBig(4, 4, 1, 2), // Yellow Door
-    Tile.initBig(5, 4, 1, 2), // Red Door
-    Tile.initBig(6, 4, 1, 2), // Blue Door
-    Tile.init(7, 4), // Yellow Key
-    Tile.init(7, 5), // Red Key
-    Tile.init(7, 6), // Blue Key
-    Tile.init(4, 6), // Yellow Button
-    Tile.init(5, 6), // Red Button
-    Tile.init(6, 6), // Blue Button
-};
+const tiles = tileinfo.tiles;
 
 pub fn main() !void {
     // Initialization
@@ -107,19 +77,3 @@ fn LargerInt(comptime T: type) type {
         },
     });
 }
-
-const Tile = struct {
-    source: rect,
-
-    pub fn init(x: f32, y: f32) Tile {
-        return Tile{ .source = rect.init(x * 8, y * 8, 8, 8) };
-    }
-
-    pub fn initBig(x: f32, y: f32, w: f32, h: f32) Tile {
-        return Tile{ .source = rect.init(x * 8, y * 8, w * 8, h * 8) };
-    }
-
-    pub fn draw(self: Tile, texture: rl.Texture2D, pos: rect) void {
-        rl.drawTexturePro(texture, self.source, pos, orig, 0, rl.Color.white);
-    }
-};
