@@ -10,6 +10,7 @@ const orig = rl.Vector2.init(0, 0);
 
 const tiles = tileinfo.tiles;
 
+pub fn main() void {
     // Initialization
     //--------------------------------------------------------------------------------------
     const screenWidth = 1024;
