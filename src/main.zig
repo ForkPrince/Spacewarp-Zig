@@ -51,6 +51,8 @@ pub fn main() !void {
 
     rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
+    var gesture: rl.Gesture = undefined;
+    var touch_position: rl.Vector2 = undefined;
 
     const textures: rl.Texture2D = rl.loadTexture("./resources/spacewarp_assets.png");
     defer textures.unload();
@@ -58,13 +60,21 @@ pub fn main() !void {
     const pos = rect.init(0, 0, 48, 48);
     const frame = rect.init(8, 0, 8, 8);
 
+    var selection: u32 = 0;
     // Main game loop
     while (!rl.windowShouldClose()) { // Detect window close button or ESC key
         // Update
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
+        gesture = rl.getGestureDetected();
+        touch_position = rl.getTouchPosition(0);
+        if (touch_position.x > 772) {
+            const x = @divFloor(touch_position.x - 772, 63);
+            const y = @divFloor(touch_position.y, 63);
 
+            if (gesture == rl.Gesture.gesture_tap) selection = @intFromFloat(4 * y + x);
+        }
         // Draw
         //----------------------------------------------------------------------------------
         rl.beginDrawing();
@@ -76,15 +86,26 @@ pub fn main() !void {
         rl.drawText("Congrats! You created your first window!", 190, 200, 20, rl.Color.light_gray);
 
         for (tiles, 0..) |tile, i| {
-            // const position = rect.init(@floatFromInt(780 + 63 * i), 4, 48, 48);
-            const position = rect.init(@floatFromInt(780 + 63 * @mod(i, 4)), @floatFromInt(4 + 63 * @divFloor(i, 4)), 48, 48);
-            // rl.drawTexturePro(textures, frame, position, orig, 0, rl.Color.white);
+            const x: LargerInt(isize) = 780 + 63 * @mod(i, 4);
+            const y: LargerInt(isize) = 8 + 63 * @divFloor(i, 4);
+            const position = rect.init(@floatFromInt(x), @floatFromInt(y), 48, 48);
+
+            if (i == selection) rl.drawRectangle(@truncate(x - 4), @truncate(y - 4), 56, 56, rl.Color.white);
             tile.draw(textures, position);
         }
 
         rl.drawTexturePro(textures, frame, pos, orig, 0, rl.Color.white);
         //----------------------------------------------------------------------------------
     }
+}
+
+fn LargerInt(comptime T: type) type {
+    return @Type(.{
+        .Int = .{
+            .bits = @typeInfo(T).Int.bits + 1,
+            .signedness = @typeInfo(T).Int.signedness,
+        },
+    });
 }
 
 const Tile = struct {
