@@ -95,7 +95,7 @@ pub fn main() void {
                     },
                     .bottom => {
                         tilemap[y - 1][x] = tileinfo.void_tile;
-                        if (x < 15 and tilemap[y][x + 1].tile_type == tileinfo.TileType.corner) {
+                        if (tilemap[y - 1][x].tile_type == tileinfo.TileType.end) {
                             tilemap[y][x + 1] = tileinfo.void_tile;
                             tilemap[y - 1][x + 1] = tileinfo.void_tile;
                         }
