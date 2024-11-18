@@ -208,7 +208,7 @@ pub fn main() !void {
 
         if (show_highlight) rl.drawRectangleRec(highlight, transparent);
 
-        if (saving_file) {
+        if (saving_file or loading_file) {
             drawFileDialog();
         }
         //----------------------------------------------------------------------------------
