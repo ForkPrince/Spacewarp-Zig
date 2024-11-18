@@ -186,11 +186,11 @@ pub fn main() !void {
         rl.drawRectangle(768, 0, 4, 768, rl.Color.dark_gray);
 
         for (tiles, 0..) |tile, i| {
-            const x: LargerInt(isize) = 780 + 63 * @mod(i, 4);
-            const y: LargerInt(isize) = 8 + 63 * @divFloor(i, 4);
+            const x: i32 = @intCast(780 + 63 * @mod(i, 4));
+            const y: i32 = @intCast(8 + 63 * @divFloor(i, 4));
             const position = rect.init(@floatFromInt(x), @floatFromInt(y), 48, 48);
 
-            if (i == selection) rl.drawRectangle(@truncate(x - 4), @truncate(y - 4), 56, 56, rl.Color.white);
+            if (i == selection) rl.drawRectangle(x - 4, y - 4, 56, 56, rl.Color.white);
             tile.draw(textures, position);
         }
 
@@ -275,13 +275,4 @@ fn loadFile(filename: []const u8) ![16][16]tileinfo.Tile(f32) {
         }
     }
     return tile_list;
-}
-
-fn LargerInt(comptime T: type) type {
-    return @Type(.{
-        .Int = .{
-            .bits = @typeInfo(T).Int.bits + 1,
-            .signedness = @typeInfo(T).Int.signedness,
-        },
-    });
 }
