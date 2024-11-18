@@ -220,7 +220,7 @@ pub fn main() !void {
 
 fn getSaveFileName() ![:0]const u8 {
     var buf = [_]u8{undefined} ** 30;
-    return try std.fmt.bufPrintZ(&buf, "resources/save_{s}{d}.dat", .{ difficulty.getCurrentSelection(), level_number });
+    return try std.fmt.bufPrintZ(&buf, "resources/level_{s}{d}.dat", .{ difficulty.getCurrentSelection(), level_number });
 }
 
 fn updateFileDialog(touch_position: anytype, gesture: anytype) void {
@@ -238,7 +238,7 @@ fn drawFileDialog() void {
 
     rl.drawRectangle(152, 359, 480, 50, rl.Color.dark_gray);
 
-    rl.drawText("save_", 160, 364, 40, rl.Color.white);
+    rl.drawText("level_", 160, 364, 40, rl.Color.white);
     rl.drawText(difficulty.getCurrentSelection(), 280, 364, 40, rl.Color.white);
 
     var buf: [4]u8 = undefined;
