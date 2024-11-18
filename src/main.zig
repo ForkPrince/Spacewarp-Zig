@@ -31,11 +31,6 @@ var difficulty = struct {
 var level_number: u8 = 0;
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const ally = gpa.allocator();
-    defer _ = gpa.deinit();
-    _ = ally;
-
     // Initialization
     //--------------------------------------------------------------------------------------
     const screenWidth = 1024;
