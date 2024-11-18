@@ -10,7 +10,32 @@ const orig = rl.Vector2.init(0, 0);
 
 const tiles = tileinfo.tiles;
 
-pub fn main() void {
+var difficulty = struct {
+    diffs: [4][:0]const u8,
+    selection: usize,
+
+    pub fn nextSelection(self: *@This()) void {
+        self.selection += 1;
+        self.selection = @mod(self.selection, self.diffs.len);
+    }
+
+    pub fn getCurrentSelection(self: @This()) [:0]const u8 {
+        return self.diffs[self.selection];
+    }
+
+    pub fn init() @This() {
+        return @This(){ .diffs = [4][:0]const u8{ "easy", "normal", "hard", "lunatic" }, .selection = 0 };
+    }
+}.init();
+
+var level_number: u8 = 0;
+
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const ally = gpa.allocator();
+    defer _ = gpa.deinit();
+    _ = ally;
+
     // Initialization
     //--------------------------------------------------------------------------------------
     const screenWidth = 1024;
@@ -30,6 +55,9 @@ pub fn main() void {
 
     var gesture: rl.Gesture = undefined;
     var touch_position: rl.Vector2 = undefined;
+
+    var saving_file: bool = false;
+    var loading_file: bool = false;
 
     const textures: rl.Texture2D = rl.loadTexture("./resources/spacewarp_assets.png");
     defer textures.unload();
@@ -100,6 +128,11 @@ pub fn main() void {
                             tilemap[y - 1][x + 1] = tileinfo.void_tile;
                         }
                     },
+                    .corner => {
+                        tilemap[y - 1][x] = tileinfo.void_tile;
+                        tilemap[y][x - 1] = tileinfo.void_tile;
+                        tilemap[y - 1][x - 1] = tileinfo.void_tile;
+                    },
                     else => {},
                 }
                 switch (selected_tile.tile_type) {
@@ -117,6 +150,29 @@ pub fn main() void {
                 }
             }
         }
+
+        if (rl.isKeyPressed(rl.KeyboardKey.key_s) and !loading_file) saving_file = !saving_file;
+
+        if (saving_file) {
+            updateFileDialog(touch_position, gesture);
+            if (rl.isKeyPressed(rl.KeyboardKey.key_enter)) {
+                const filename = try getSaveFileName();
+                try saveFile(filename, tilemap);
+                saving_file = false;
+            }
+        }
+
+        if (rl.isKeyPressed(rl.KeyboardKey.key_l) and !saving_file) loading_file = !loading_file;
+
+        if (loading_file) {
+            updateFileDialog(touch_position, gesture);
+            if (rl.isKeyPressed(rl.KeyboardKey.key_enter)) {
+                const filename = try getSaveFileName();
+                tilemap = try loadFile(filename);
+                loading_file = false;
+            }
+        }
+
         // Draw
         //----------------------------------------------------------------------------------
         rl.beginDrawing();
@@ -151,8 +207,69 @@ pub fn main() void {
         }
 
         if (show_highlight) rl.drawRectangleRec(highlight, transparent);
+
+        if (saving_file) {
+            drawFileDialog();
+        }
         //----------------------------------------------------------------------------------
     }
+}
+
+fn getSaveFileName() ![:0]const u8 {
+    var buf = [_]u8{undefined} ** 30;
+    return try std.fmt.bufPrintZ(&buf, "resources/save_{s}{d}.dat", .{ difficulty.getCurrentSelection(), level_number });
+}
+
+fn updateFileDialog(touch_position: anytype, gesture: anytype) void {
+    if (touch_position.x >= 284 and touch_position.x < 420 and gesture == rl.Gesture.gesture_tap) {
+        difficulty.nextSelection();
+    }
+    if (rl.isKeyPressed(rl.KeyboardKey.key_i)) level_number = @addWithOverflow(level_number, 1)[0];
+    if (rl.isKeyPressed(rl.KeyboardKey.key_d)) level_number = @subWithOverflow(level_number, 1)[0];
+}
+
+fn drawFileDialog() void {
+    const rec = rect.init(136, 256, 512, 256);
+    rl.drawRectangleRec(rec, rl.Color.light_gray);
+    rl.drawText("Input file path", 307, 264, 24, rl.Color.dark_gray);
+
+    rl.drawRectangle(152, 359, 480, 50, rl.Color.dark_gray);
+
+    rl.drawText("save_", 160, 364, 40, rl.Color.white);
+    rl.drawText(difficulty.getCurrentSelection(), 280, 364, 40, rl.Color.white);
+
+    var buf: [4]u8 = undefined;
+    const lvl_number = std.fmt.bufPrintZ(&buf, "{d}", .{level_number}) catch unreachable;
+
+    rl.drawText(lvl_number, 420, 364, 40, rl.Color.white);
+
+    rl.drawText(".dat", 550, 364, 40, rl.Color.white);
+}
+
+fn saveFile(filename: []const u8, items: anytype) !void {
+    const file = try std.fs.cwd().createFile(filename, .{});
+    defer file.close();
+
+    for (items) |column| {
+        for (column) |item| {
+            try file.writeAll(std.mem.asBytes(&item));
+        }
+    }
+}
+
+fn loadFile(filename: []const u8) ![16][16]tileinfo.Tile(f32) {
+    const file = try std.fs.cwd().openFile(filename, .{});
+    defer file.close();
+
+    var tile_list: [16][16]tileinfo.Tile(f32) = undefined;
+    for (&tile_list) |*row| {
+        for (row) |*tile| {
+            var item: tileinfo.Tile(f32) = undefined;
+            _ = try file.readAll(std.mem.asBytes(&item));
+            tile.* = item;
+        }
+    }
+    return tile_list;
 }
 
 fn LargerInt(comptime T: type) type {
