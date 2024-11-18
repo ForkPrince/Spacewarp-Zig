@@ -7,8 +7,7 @@ jobs:
     strategy:
       matrix:
         # target: [x86_64-windows, aarch64-windows, x86_64-linux, aarch64-linux, x86_64-macos, aarch64-macos]
-        # target: [x86_64-windows, aarch64-windows, x86_64-linux, aarch64-linux]
-        target: [x86_64-windows, aarch64-windows, x86_64-linux]
+        target: [x86_64-windows, aarch64-windows]
         branch: [master, editor]
 
     runs-on: ubuntu-latest
@@ -20,7 +19,7 @@ jobs:
           ref: ${{ matrix.branch }}
 
       - name: Add dependencies
-        run: sudo apt install -y build-essential libgtk-4-dev
+        run: sudo apt install -y build-essential libgtk-4-dev libgl-dev libx11-dev libxext-dev libxrandr-dev libxrender-dev libxi-dev
 
       - name: Install zig
         uses: goto-bus-stop/setup-zig@v2
