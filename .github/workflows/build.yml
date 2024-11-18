@@ -1,0 +1,33 @@
+name: Build SpaceWarp
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        target: [x86_64-windows, aarch64-windows, x86_64-linux, aarch64-linux, x86_64-macos, aarch64-macos]
+        branch: [master, editor]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Install zig
+        uses: goto-bus-stop/setup-zig@v2
+
+      - name: Build
+        run: zig build -Doptimize=ReleaseSmall -Dtarget=${{ matrix.target }}
+
+      - name: Copy resources
+        run: cp -r ./resources ./zig-out/bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-${{ matrix.branch }}
+          path: ./zig-out/bin
