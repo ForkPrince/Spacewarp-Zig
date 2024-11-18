@@ -168,7 +168,10 @@ pub fn main() !void {
             updateFileDialog(touch_position, gesture);
             if (rl.isKeyPressed(rl.KeyboardKey.key_enter)) {
                 const filename = try getSaveFileName();
-                tilemap = try loadFile(filename);
+                tilemap = loadFile(filename) catch |err| switch (err) {
+                    error.FileNotFound => tilemap,
+                    else => return err,
+                };
                 loading_file = false;
             }
         }
