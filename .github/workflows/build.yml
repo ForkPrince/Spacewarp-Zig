@@ -17,6 +17,9 @@ jobs:
         with:
           ref: ${{ matrix.branch }}
 
+      - name: Add dependencies
+        run: sudo apt install -y libgl-dev libx11-dev libxext-dev libxrandr-dev libxrender-dev libxi-dev
+
       - name: Install zig
         uses: goto-bus-stop/setup-zig@v2
 
