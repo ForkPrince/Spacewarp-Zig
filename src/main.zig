@@ -95,12 +95,14 @@ pub fn main() !void {
 
         if (touch_position.x < 768) {
             show_highlight = true;
+            const cursor_x = @divFloor(@max(touch_position.x, 0), 48);
+            const cursor_y = @divFloor(@max(touch_position.y, 0), 48);
 
-            const x: usize = @intFromFloat(@divFloor(touch_position.x, 48));
-            const y: usize = @intFromFloat(@divFloor(touch_position.y, 48));
+            const x: usize = @intFromFloat(cursor_x);
+            const y: usize = @intFromFloat(cursor_y);
 
-            highlight.x = @floatFromInt(x * 48);
-            highlight.y = @floatFromInt(y * 48);
+            highlight.x = cursor_x * 48;
+            highlight.y = cursor_y * 48;
 
             if (gesture == rl.Gesture.gesture_tap and !saving_file and !loading_file) {
                 const tile = &tilemap[y][x];
