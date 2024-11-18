@@ -107,7 +107,7 @@ pub fn main() !void {
             highlight.x = @floatFromInt(x * 48);
             highlight.y = @floatFromInt(y * 48);
 
-            if (gesture == rl.Gesture.gesture_tap) {
+            if (gesture == rl.Gesture.gesture_tap and !saving_file and !loading_file) {
                 const tile = &tilemap[y][x];
                 switch (tile.tile_type) {
                     .door => tilemap[y + 1][x] = tileinfo.void_tile,
@@ -221,7 +221,7 @@ fn getSaveFileName() ![:0]const u8 {
 }
 
 fn updateFileDialog(touch_position: anytype, gesture: anytype) void {
-    if (touch_position.x >= 284 and touch_position.x < 420 and gesture == rl.Gesture.gesture_tap) {
+    if (touch_position.x >= 284 and touch_position.x < 420 and touch_position.y >= 364 and touch_position.y <= 386 and gesture == rl.Gesture.gesture_tap) {
         difficulty.nextSelection();
     }
     if (rl.isKeyPressed(rl.KeyboardKey.key_i)) level_number = @addWithOverflow(level_number, 1)[0];
@@ -244,6 +244,8 @@ fn drawFileDialog() void {
     rl.drawText(lvl_number, 420, 364, 40, rl.Color.white);
 
     rl.drawText(".dat", 550, 364, 40, rl.Color.white);
+
+    rl.drawText("Press enter...", 320, 480, 24, rl.Color.dark_gray);
 }
 
 fn saveFile(filename: []const u8, items: anytype) !void {
