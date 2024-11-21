@@ -31,11 +31,6 @@ var difficulty = struct {
 var level_number: u8 = 0;
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const ally = gpa.allocator();
-    defer _ = gpa.deinit();
-    _ = ally;
-
     // Initialization
     //--------------------------------------------------------------------------------------
     const screenWidth = 1024;
@@ -100,12 +95,14 @@ pub fn main() !void {
 
         if (touch_position.x < 768) {
             show_highlight = true;
+            const cursor_x = @divFloor(@max(touch_position.x, 0), 48);
+            const cursor_y = @divFloor(@max(touch_position.y, 0), 48);
 
-            const x: usize = @intFromFloat(@divFloor(touch_position.x, 48));
-            const y: usize = @intFromFloat(@divFloor(touch_position.y, 48));
+            const x: usize = @intFromFloat(cursor_x);
+            const y: usize = @intFromFloat(cursor_y);
 
-            highlight.x = @floatFromInt(x * 48);
-            highlight.y = @floatFromInt(y * 48);
+            highlight.x = cursor_x * 48;
+            highlight.y = cursor_y * 48;
 
             if (gesture == rl.Gesture.gesture_tap and !saving_file and !loading_file) {
                 const tile = &tilemap[y][x];
@@ -186,11 +183,11 @@ pub fn main() !void {
         rl.drawRectangle(768, 0, 4, 768, rl.Color.dark_gray);
 
         for (tiles, 0..) |tile, i| {
-            const x: LargerInt(isize) = 780 + 63 * @mod(i, 4);
-            const y: LargerInt(isize) = 8 + 63 * @divFloor(i, 4);
+            const x: i32 = @intCast(780 + 63 * @mod(i, 4));
+            const y: i32 = @intCast(8 + 63 * @divFloor(i, 4));
             const position = rect.init(@floatFromInt(x), @floatFromInt(y), 48, 48);
 
-            if (i == selection) rl.drawRectangle(@truncate(x - 4), @truncate(y - 4), 56, 56, rl.Color.white);
+            if (i == selection) rl.drawRectangle(x - 4, y - 4, 56, 56, rl.Color.white);
             tile.draw(textures, position);
         }
 
@@ -220,7 +217,7 @@ pub fn main() !void {
 
 fn getSaveFileName() ![:0]const u8 {
     var buf = [_]u8{undefined} ** 30;
-    return try std.fmt.bufPrintZ(&buf, "resources/save_{s}{d}.dat", .{ difficulty.getCurrentSelection(), level_number });
+    return try std.fmt.bufPrintZ(&buf, "resources/level_{s}{d}.dat", .{ difficulty.getCurrentSelection(), level_number });
 }
 
 fn updateFileDialog(touch_position: anytype, gesture: anytype) void {
@@ -238,7 +235,7 @@ fn drawFileDialog() void {
 
     rl.drawRectangle(152, 359, 480, 50, rl.Color.dark_gray);
 
-    rl.drawText("save_", 160, 364, 40, rl.Color.white);
+    rl.drawText("level_", 160, 364, 40, rl.Color.white);
     rl.drawText(difficulty.getCurrentSelection(), 280, 364, 40, rl.Color.white);
 
     var buf: [4]u8 = undefined;
@@ -275,13 +272,4 @@ fn loadFile(filename: []const u8) ![16][16]tileinfo.Tile(f32) {
         }
     }
     return tile_list;
-}
-
-fn LargerInt(comptime T: type) type {
-    return @Type(.{
-        .Int = .{
-            .bits = @typeInfo(T).Int.bits + 1,
-            .signedness = @typeInfo(T).Int.signedness,
-        },
-    });
 }
