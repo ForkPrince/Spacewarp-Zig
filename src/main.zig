@@ -45,3 +45,18 @@ pub fn main() anyerror!void {
         //----------------------------------------------------------------------------------
     }
 }
+
+fn loadFile(filename: []const u8) ![16][16]tileinfo.Tile(f32) {
+    const file = try std.fs.cwd().openFile(filename, .{});
+    defer file.close();
+
+    var tile_list: [16][16]tileinfo.Tile(f32) = undefined;
+    for (&tile_list) |*row| {
+        for (row) |*tile| {
+            var item: tileinfo.Tile(f32) = undefined;
+            _ = try file.readAll(std.mem.asBytes(&item));
+            tile.* = item;
+        }
+    }
+    return tile_list;
+}
